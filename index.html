@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixel Terra TON</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #0f172a; overflow: hidden; touch-action: none; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        canvas { image-rendering: pixelated; }
+    </style>
+</head>
+<body class="text-slate-200">
+
+    <div class="fixed top-0 left-0 right-0 p-4 z-50 flex justify-between items-center glass m-2 rounded-2xl">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="map" class="w-5 h-5 text-white"></i>
+            </div>
+            <span class="font-bold tracking-tight">PixelTerra</span>
+        </div>
+        <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-xl text-sm font-medium transition-all shadow-lg shadow-blue-500/20">
+            Connect
+        </button>
+    </div>
+
+    <canvas id="gridCanvas" class="cursor-crosshair"></canvas>
+
+    <div id="infoPanel" class="fixed right-0 top-24 bottom-24 w-64 glass m-2 rounded-2xl p-4 translate-x-[120%] transition-transform duration-300 z-40">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-blue-400"></i> Сектор
+        </h3>
+        <div class="space-y-4">
+            <div>
+                <p class="text-xs text-slate-400 uppercase">Координаты</p>
+                <p id="coordLabel" class="text-xl font-mono">X: 0, Y: 0</p>
+            </div>
+            <div>
+                <p class="text-xs text-slate-400 uppercase">Владелец</p>
+                <p class="text-sm truncate text-blue-300">Свободно</p>
+            </div>
+            <button onclick="buy()" class="w-full bg-green-600 py-3 rounded-xl font-bold mt-4 hover:bg-green-500 active:scale-95 transition-all">
+                Купить за 1 TON
+            </button>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 p-4 z-50">
+        <div class="glass max-w-md mx-auto rounded-3xl p-3 flex justify-around items-center gap-2">
+            <button class="p-3 hover:bg-white/10 rounded-2xl transition-colors text-blue-400">
+                <i data-lucide="layout-grid"></i>
+            </button>
+            <div class="h-8 w-px bg-white/10"></div>
+            <input type="color" id="colorPicker" class="w-10 h-10 rounded-lg bg-transparent border-none cursor-pointer">
+            <div class="h-8 w-px bg-white/10"></div>
+            <button onclick="zoomIn()" class="p-3 hover:bg-white/10 rounded-2xl transition-colors">
+                <i data-lucide="zoom-in"></i>
+            </button>
+            <button onclick="zoomOut()" class="p-3 hover:bg-white/10 rounded-2xl transition-colors">
+                <i data-lucide="zoom-out"></i>
+            </button>
+            <button class="p-3 hover:bg-white/10 rounded-2xl transition-colors text-yellow-500">
+                <i data-lucide="trophy"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация иконок
+        lucide.createIcons();
+
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d');
+        const infoPanel = document.getElementById('infoPanel');
+        let zoom = 1;
+        let cellSize = 30;
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            
+            const currentSize = cellSize * zoom;
+
+            for (let x = 0; x < canvas.width; x += currentSize) {
+                for (let y = 0; y < canvas.height; y += currentSize) {
+                    ctx.strokeRect(x, y, currentSize, currentSize);
+                }
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const currentSize = cellSize * zoom;
+            const x = Math.floor(e.clientX / currentSize);
+            const y = Math.floor(e.clientY / currentSize);
+
+            document.getElementById('coordLabel').innerText = `X: ${x}, Y: ${y}`;
+            
+            // Показываем панель
+            infoPanel.classList.remove('translate-x-[120%]');
+            
+            // Подсветка выбранной клетки
+            draw(); 
+            ctx.fillStyle = document.getElementById('colorPicker').value;
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(x * currentSize, y * currentSize, currentSize, currentSize);
+            ctx.globalAlpha = 1.0;
+        });
+
+        function zoomIn() { zoom *= 1.2; draw(); }
+        function zoomOut() { zoom /= 1.2; draw(); }
+
+        function buy() {
+            Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            alert("Запрос к TON Connect запущен...");
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+
+        // Сообщаем TG что мы готовы
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+    </script>
+</body>
+</html>
